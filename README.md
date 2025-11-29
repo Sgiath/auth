@@ -1,15 +1,15 @@
-# Auth
+# SgiathAuth
 
 Opinionated authentication library for Phoenix LiveView applications using [WorkOS AuthKit](https://workos.com/docs/user-management).
 
 ## Installation
 
-Add `auth` to your list of dependencies in `mix.exs`:
+Add `sgiath_auth` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:auth, github: "sgiath/auth"}
+    {:sgiath_auth, github: "sgiath/auth"}
   ]
 end
 ```
@@ -20,7 +20,7 @@ end
 
 ```elixir
 # config/runtime.exs
-config :auth,
+config :sgiath_auth,
   workos_client_id: System.fetch_env!("WORKOS_CLIENT_ID"),
   workos_secret_key: System.fetch_env!("WORKOS_SECRET_KEY"),
   callback_url: "https://yourapp.com/auth/callback"
@@ -29,7 +29,7 @@ config :auth,
 ### Optional
 
 ```elixir
-config :auth,
+config :sgiath_auth,
   # organization to add all new users to, useful when running multiple apps under
   # one WorkOS account and separating users by organizations
   organization_id: "org_...",
@@ -37,7 +37,7 @@ config :auth,
   sign_in_path: "/login",
   # Path to redirect after sign-in/sign-out (default: "/")
   default_path: "/dashboard",
-  # Module implementing Auth.Profile behaviour (default: nil)
+  # Module implementing SgiathAuth.Profile behaviour (default: nil)
   profile_module: MyApp.Profile
 ```
 
@@ -50,7 +50,7 @@ config :auth,
 def start(_type, _args) do
   children = [
     # ... other children
-    Auth.Supervisor
+    SgiathAuth.Supervisor
   ]
 
   opts = [strategy: :one_for_one, name: MyApp.Supervisor]
@@ -62,7 +62,7 @@ end
 
 ```elixir
 # lib/my_app_web/router.ex
-scope "/auth", Auth do
+scope "/auth", SgiathAuth do
   pipe_through [:browser]
 
   get "/sign-in", Controller, :sign_in
@@ -76,7 +76,7 @@ end
 
 ```elixir
 # lib/my_app_web/router.ex
-import Auth
+import SgiathAuth
 
 pipeline :browser do
   # ... existing plugs
@@ -93,9 +93,9 @@ def live_view do
   quote do
     use Phoenix.LiveView, layout: {MyAppWeb.Layouts, :app}
 
-    on_mount {Auth, :mount_current_scope}
+    on_mount {SgiathAuth, :mount_current_scope}
     # or for routes requiring authentication:
-    # on_mount {Auth, :require_authenticated}
+    # on_mount {SgiathAuth, :require_authenticated}
   end
 end
 ```
@@ -106,7 +106,7 @@ For regular controllers:
 
 ```elixir
 # lib/my_app_web/router.ex
-import Auth
+import SgiathAuth
 
 pipeline :require_authenticated do
   plug :require_authenticated_user
@@ -122,20 +122,20 @@ end
 For LiveView, use the `:require_authenticated` hook:
 
 ```elixir
-live_session :authenticated, on_mount: [{Auth, :require_authenticated}] do
+live_session :authenticated, on_mount: [{SgiathAuth, :require_authenticated}] do
   live "/dashboard", DashboardLive
 end
 ```
 
 ## Profile Module
 
-To populate the `profile` field in `Auth.Scope` with application-specific data, implement the `Auth.Profile` behaviour:
+To populate the `profile` field in `SgiathAuth.Scope` with application-specific data, implement the `SgiathAuth.Profile` behaviour:
 
 ```elixir
 defmodule MyApp.Profile do
-  @behaviour Auth.Profile
+  @behaviour SgiathAuth.Profile
 
-  @impl Auth.Profile
+  @impl SgiathAuth.Profile
   def load_profile(%{"id" => user_id}) do
     MyApp.UserProfile
     |> where(user_id: ^user_id)
@@ -160,14 +160,14 @@ end
 Then configure it:
 
 ```elixir
-config :auth, profile_module: MyApp.Profile
+config :sgiath_auth, profile_module: MyApp.Profile
 ```
 
 The profile will be available in `conn.assigns.current_scope.profile` and `socket.assigns.current_scope.profile`.
 
-## Auth.Scope
+## SgiathAuth.Scope
 
-The `Auth.Scope` struct contains:
+The `SgiathAuth.Scope` struct contains:
 
 - `user` - The WorkOS user map
 - `profile` - Application-specific profile data (if `profile_module` is configured)

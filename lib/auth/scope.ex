@@ -1,4 +1,4 @@
-defmodule Auth.Scope do
+defmodule SgiathAuth.Scope do
   @moduledoc false
 
   require Logger
@@ -15,7 +15,7 @@ defmodule Auth.Scope do
   def for_user(nil, _admin), do: nil
 
   defp load_profile(user) do
-    case Application.get_env(:auth, :profile_module) do
+    case Application.get_env(:sgiath_auth, :profile_module) do
       nil -> nil
       module -> module.load_profile(user)
     end

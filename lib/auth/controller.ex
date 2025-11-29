@@ -1,12 +1,12 @@
-defmodule Auth.Controller do
+defmodule SgiathAuth.Controller do
   use Phoenix.Controller, formats: [:html, :json]
 
   import Plug.Conn
 
   def sign_in(conn, _params) do
-    default = Auth.WorkOS.default_path()
+    default = SgiathAuth.WorkOS.default_path()
     return_to = get_session(conn, :user_return_to, default)
-    {:ok, url} = Auth.WorkOS.get_authorization_url(state: Base.encode64(return_to))
+    {:ok, url} = SgiathAuth.WorkOS.get_authorization_url(state: Base.encode64(return_to))
 
     redirect(conn, external: url)
   end
@@ -15,18 +15,18 @@ defmodule Auth.Controller do
     case get_session(conn, :access_token) do
       nil ->
         # No session, just redirect to home
-        redirect(conn, to: Auth.WorkOS.default_path())
+        redirect(conn, to: SgiathAuth.WorkOS.default_path())
 
       access_token ->
         # Try to get session_id for WorkOS logout, but don't crash if it fails
         redirect_url =
-          case Auth.Token.verify(access_token) do
+          case SgiathAuth.Token.verify(access_token) do
             {:ok, %{"sid" => session_id}} ->
-              {:ok, url} = Auth.WorkOS.get_logout_url(session_id)
+              {:ok, url} = SgiathAuth.WorkOS.get_logout_url(session_id)
               url
 
             _ ->
-              Auth.WorkOS.default_path()
+              SgiathAuth.WorkOS.default_path()
           end
 
         delete_csrf_token()
@@ -39,11 +39,14 @@ defmodule Auth.Controller do
   end
 
   def sign_up(conn, _params) do
-    default = Auth.WorkOS.default_path()
+    default = SgiathAuth.WorkOS.default_path()
     return_to = get_session(conn, :user_return_to, default)
 
     {:ok, url} =
-      Auth.WorkOS.get_authorization_url(screen_hint: "sign-up", state: Base.encode64(return_to))
+      SgiathAuth.WorkOS.get_authorization_url(
+        screen_hint: "sign-up",
+        state: Base.encode64(return_to)
+      )
 
     redirect(conn, external: url)
   end
@@ -53,7 +56,7 @@ defmodule Auth.Controller do
   end
 
   def callback(conn, %{"code" => code, "state" => state}) do
-    case Auth.WorkOS.authenticate_with_code(conn, code) do
+    case SgiathAuth.WorkOS.authenticate_with_code(conn, code) do
       {:ok, response} ->
         conn
         |> authenticate(response)
@@ -65,7 +68,8 @@ defmodule Auth.Controller do
   end
 
   def callback(conn, %{"code" => code}),
-    do: callback(conn, %{"code" => code, "state" => Base.encode64(Auth.WorkOS.default_path())})
+    do:
+      callback(conn, %{"code" => code, "state" => Base.encode64(SgiathAuth.WorkOS.default_path())})
 
   defp authenticate(conn, %{"access_token" => access_token, "refresh_token" => refresh_token}) do
     conn
@@ -75,7 +79,7 @@ defmodule Auth.Controller do
 
   # Safely decode and validate the return path to prevent open redirect attacks
   defp decode_return_path(state) do
-    default = Auth.WorkOS.default_path()
+    default = SgiathAuth.WorkOS.default_path()
 
     case Base.decode64(state) do
       {:ok, path} -> validate_relative_path(path, default)

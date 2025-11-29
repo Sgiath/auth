@@ -1,23 +1,23 @@
-defmodule Auth.Token do
+defmodule SgiathAuth.Token do
   use Joken.Config
 
-  add_hook(JokenJwks, strategy: Auth.Token.Strategy)
+  add_hook(JokenJwks, strategy: SgiathAuth.Token.Strategy)
 
   @impl Joken.Config
   def token_config do
-    base_url = Auth.WorkOS.base_url()
-    client_id = Auth.WorkOS.client_id()
+    base_url = SgiathAuth.WorkOS.base_url()
+    client_id = SgiathAuth.WorkOS.client_id()
 
     default_claims(iss: "#{base_url}/user_management/#{client_id}")
   end
 end
 
-defmodule Auth.Token.Strategy do
+defmodule SgiathAuth.Token.Strategy do
   use JokenJwks.DefaultStrategyTemplate
 
   def init_opts(opts) do
-    base_url = Auth.WorkOS.base_url()
-    client_id = Auth.WorkOS.client_id()
+    base_url = SgiathAuth.WorkOS.base_url()
+    client_id = SgiathAuth.WorkOS.client_id()
 
     Keyword.merge(opts, jwks_url: "#{base_url}/sso/jwks/#{client_id}")
   end

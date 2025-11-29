@@ -1,4 +1,4 @@
-defmodule Auth.Supervisor do
+defmodule SgiathAuth.Supervisor do
   use Supervisor
 
   def start_link(opts) do
@@ -7,7 +7,7 @@ defmodule Auth.Supervisor do
 
   def init(_opts) do
     children = [
-      {Auth.Token.Strategy, time_interval: 2_000}
+      {SgiathAuth.Token.Strategy, time_interval: 2_000}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -1,4 +1,4 @@
-defmodule Auth.WorkOS do
+defmodule SgiathAuth.WorkOS do
   @moduledoc """
   Module for working with WorkOS.
   """
@@ -10,7 +10,7 @@ defmodule Auth.WorkOS do
   def get_authorization_url(opts \\ []) do
     # if an organization ID is set in the config, add it to the query
     query =
-      Application.fetch_env(:auth, :workos_organization_id)
+      Application.fetch_env(:sgiath_auth, :workos_organization_id)
       |> case do
         {:ok, organization_id} -> Keyword.put_new(opts, :organization_id, organization_id)
         :error -> opts
@@ -78,27 +78,27 @@ defmodule Auth.WorkOS do
   def base_url, do: @api_base_url
 
   def client_id do
-    Application.fetch_env!(:auth, :workos_client_id)
+    Application.fetch_env!(:sgiath_auth, :workos_client_id)
   end
 
   def client_secret do
-    Application.fetch_env!(:auth, :workos_secret_key)
+    Application.fetch_env!(:sgiath_auth, :workos_secret_key)
   end
 
   defp callback_url do
-    Application.fetch_env!(:auth, :callback_url)
+    Application.fetch_env!(:sgiath_auth, :callback_url)
   end
 
   def sign_in_path do
-    Application.get_env(:auth, :sign_in_path, "/sign-in")
+    Application.get_env(:sgiath_auth, :sign_in_path, "/sign-in")
   end
 
   def default_path do
-    Application.get_env(:auth, :default_path, "/")
+    Application.get_env(:sgiath_auth, :default_path, "/")
   end
 
   def profile_module do
-    Application.get_env(:auth, :profile_module)
+    Application.get_env(:sgiath_auth, :profile_module)
   end
 
   defp handle_response({:ok, %Req.Response{status: 200, body: body}}) do

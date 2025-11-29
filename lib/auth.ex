@@ -1,4 +1,4 @@
-defmodule Auth do
+defmodule SgiathAuth do
   import Plug.Conn
   import Phoenix.Controller
 
@@ -10,23 +10,23 @@ defmodule Auth do
     with {:session, %{"access_token" => access_token, "refresh_token" => refresh_token}} <-
            {:session, get_session(conn)},
          {:token, {:ok, %{"sub" => user_id, "sid" => session_id} = token}} <-
-           {:token, Auth.Token.verify_and_validate(access_token)},
-         {:user, {:ok, user}} <- {:user, Auth.WorkOS.get_user(user_id)} do
+           {:token, SgiathAuth.Token.verify_and_validate(access_token)},
+         {:user, {:ok, user}} <- {:user, SgiathAuth.WorkOS.get_user(user_id)} do
       admin = get_in(token, ["act", "sub"])
 
       conn
       |> put_tokens_in_session(access_token, refresh_token, session_id)
-      |> assign(:current_scope, Auth.Scope.for_user(user, admin))
+      |> assign(:current_scope, SgiathAuth.Scope.for_user(user, admin))
     else
       {:session, %{}} ->
         Logger.debug("[auth] session without access token")
-        assign(conn, :current_scope, Auth.Scope.for_user(nil))
+        assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
 
       {:token, {:error, _reason}} ->
         # Prevent infinite recursion - only attempt refresh once
         if conn.private[:auth_refresh_attempted] do
           Logger.debug("[auth] refresh already attempted, giving up")
-          assign(conn, :current_scope, Auth.Scope.for_user(nil))
+          assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
         else
           Logger.debug("[auth] refreshing session")
 
@@ -38,14 +38,14 @@ defmodule Auth do
 
       {:user, {:error, reason}} ->
         Logger.warning("[auth] failed to fetch user, reason: #{inspect(reason)}")
-        assign(conn, :current_scope, Auth.Scope.for_user(nil))
+        assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
     end
   end
 
   defp refresh_session(conn) do
     refresh_token = get_session(conn, :refresh_token)
 
-    case Auth.WorkOS.authenticate_with_refresh_token(conn, refresh_token) do
+    case SgiathAuth.WorkOS.authenticate_with_refresh_token(conn, refresh_token) do
       {:ok, response} ->
         Logger.debug("[auth] refreshed session successfully")
 
@@ -83,18 +83,18 @@ defmodule Auth do
     if socket.assigns.current_scope && socket.assigns.current_scope.user do
       {:cont, socket}
     else
-      {:halt, Phoenix.LiveView.redirect(socket, to: Auth.WorkOS.sign_in_path())}
+      {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.sign_in_path())}
     end
   end
 
   if Mix.env() == :test do
     def on_mount(:test_authenticated, _params, session, socket) do
       case session do
-        %{"test_scope" => %Auth.Scope{} = scope} ->
+        %{"test_scope" => %SgiathAuth.Scope{} = scope} ->
           {:cont, Phoenix.Component.assign(socket, :current_scope, scope)}
 
         _ ->
-          {:halt, Phoenix.LiveView.redirect(socket, to: Auth.WorkOS.sign_in_path())}
+          {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.sign_in_path())}
       end
     end
   end
@@ -103,21 +103,21 @@ defmodule Auth do
     Phoenix.Component.assign_new(socket, :current_scope, fn ->
       with {:session, %{"access_token" => access_token}} <- {:session, session},
            {:token, {:ok, %{"sub" => user_id} = token}} <-
-             {:token, Auth.Token.verify_and_validate(access_token)},
-           {:user, {:ok, user}} <- {:user, Auth.WorkOS.get_user(user_id)} do
-        Auth.Scope.for_user(user, get_in(token, ["act", "sub"]))
+             {:token, SgiathAuth.Token.verify_and_validate(access_token)},
+           {:user, {:ok, user}} <- {:user, SgiathAuth.WorkOS.get_user(user_id)} do
+        SgiathAuth.Scope.for_user(user, get_in(token, ["act", "sub"]))
       else
         {:session, %{}} ->
           Logger.debug("[auth] session without access token")
-          Auth.Scope.for_user(nil)
+          SgiathAuth.Scope.for_user(nil)
 
         {:token, {:error, _reason}} ->
           Logger.debug("[auth] refereshing session")
-          Auth.Scope.for_user(nil)
+          SgiathAuth.Scope.for_user(nil)
 
         {:user, {:error, reason}} ->
           Logger.warning("[auth] failed to fetch user, reason: #{inspect(reason)}")
-          Auth.Scope.for_user(nil)
+          SgiathAuth.Scope.for_user(nil)
       end
     end)
   end
@@ -128,7 +128,7 @@ defmodule Auth do
     else
       conn
       |> maybe_store_return_to()
-      |> redirect(to: Auth.WorkOS.sign_in_path())
+      |> redirect(to: SgiathAuth.WorkOS.sign_in_path())
       |> halt()
     end
   end

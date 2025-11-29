@@ -1,8 +1,8 @@
-defmodule AuthTest do
+defmodule SgiathAuthTest do
   use ExUnit.Case
-  doctest Auth
+  doctest SgiathAuth
 
   test "greets the world" do
-    assert Auth.hello() == :world
+    assert SgiathAuth.hello() == :world
   end
 end
