@@ -8,8 +8,14 @@ defmodule Auth.WorkOS do
   @api_base_url "https://api.workos.com"
 
   def get_authorization_url(opts \\ []) do
+    # if an organization ID is set in the config, add it to the query
     query =
-      opts
+      Application.fetch_env(:auth, :workos_organization_id)
+      |> case do
+        {:ok, organization_id} -> Keyword.put_new(opts, :organization_id, organization_id)
+        :error -> opts
+      end
+      # default sign-in if not specified
       |> Keyword.put_new(:screen_hint, "sign-in")
       |> Keyword.put_new(:state, "")
       |> Keyword.merge(
