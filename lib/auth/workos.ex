@@ -24,6 +24,7 @@ defmodule SgiathAuth.WorkOS do
         client_id: client_id(),
         redirect_uri: callback_url()
       )
+      |> dbg()
 
     {:ok, "#{@api_base_url}/user_management/authorize?#{URI.encode_query(query)}"}
   end
@@ -31,7 +32,8 @@ defmodule SgiathAuth.WorkOS do
   def get_logout_url(session_id) do
     query = [
       client_id: client_id(),
-      session_id: session_id
+      session_id: session_id,
+      return_to: logout_return_to()
     ]
 
     {:ok, "#{@api_base_url}/user_management/sessions/logout?#{URI.encode_query(query)}"}
@@ -87,6 +89,10 @@ defmodule SgiathAuth.WorkOS do
 
   defp callback_url do
     Application.fetch_env!(:sgiath_auth, :callback_url)
+  end
+
+  defp logout_return_to do
+    Application.get_env(:sgiath_auth, :logout_return_to, "/")
   end
 
   def sign_in_path do

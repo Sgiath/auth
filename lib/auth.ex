@@ -12,11 +12,17 @@ defmodule SgiathAuth do
          {:token, {:ok, %{"sub" => user_id, "sid" => session_id} = token}} <-
            {:token, SgiathAuth.Token.verify_and_validate(access_token)},
          {:user, {:ok, user}} <- {:user, SgiathAuth.WorkOS.get_user(user_id)} do
+      Logger.metadata(session_id: session_id)
+
       admin = get_in(token, ["act", "sub"])
+      scope = SgiathAuth.Scope.for_user(user, admin)
 
       conn
-      |> put_tokens_in_session(access_token, refresh_token, session_id)
-      |> assign(:current_scope, SgiathAuth.Scope.for_user(user, admin))
+      |> put_session(:access_token, access_token)
+      |> put_session(:refresh_token, refresh_token)
+      |> put_session(:live_socket_id, session_id)
+      |> put_session(:current_scope, scope)
+      |> assign(:current_scope, scope)
     else
       {:session, %{}} ->
         Logger.debug("[auth] session without access token")
@@ -64,15 +70,6 @@ defmodule SgiathAuth do
     end
   end
 
-  defp put_tokens_in_session(conn, access_token, refresh_token, session_id) do
-    Logger.metadata(session_id: session_id)
-
-    conn
-    |> put_session(:access_token, access_token)
-    |> put_session(:refresh_token, refresh_token)
-    |> put_session(:live_socket_id, session_id)
-  end
-
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
@@ -100,26 +97,7 @@ defmodule SgiathAuth do
   end
 
   defp mount_current_scope(socket, session) do
-    Phoenix.Component.assign_new(socket, :current_scope, fn ->
-      with {:session, %{"access_token" => access_token}} <- {:session, session},
-           {:token, {:ok, %{"sub" => user_id} = token}} <-
-             {:token, SgiathAuth.Token.verify_and_validate(access_token)},
-           {:user, {:ok, user}} <- {:user, SgiathAuth.WorkOS.get_user(user_id)} do
-        SgiathAuth.Scope.for_user(user, get_in(token, ["act", "sub"]))
-      else
-        {:session, %{}} ->
-          Logger.debug("[auth] session without access token")
-          SgiathAuth.Scope.for_user(nil)
-
-        {:token, {:error, _reason}} ->
-          Logger.debug("[auth] refereshing session")
-          SgiathAuth.Scope.for_user(nil)
-
-        {:user, {:error, reason}} ->
-          Logger.warning("[auth] failed to fetch user, reason: #{inspect(reason)}")
-          SgiathAuth.Scope.for_user(nil)
-      end
-    end)
+    Phoenix.Component.assign_new(socket, :current_scope, fn -> session["current_scope"] end)
   end
 
   def require_authenticated_user(conn, _opts) do
