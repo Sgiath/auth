@@ -9,30 +9,25 @@ defmodule SgiathAuth do
 
     with {:session, %{"access_token" => access_token, "refresh_token" => refresh_token}} <-
            {:session, get_session(conn)},
-         {:token, {:ok, %{"sub" => user_id, "sid" => session_id} = token}} <-
-           {:token, SgiathAuth.Token.verify_and_validate(access_token)},
-         {:user, {:ok, user}} <- {:user, SgiathAuth.WorkOS.get_user(user_id)} do
+         {:scope, {:ok, scope, session_id}} <-
+           {:scope, build_scope_from_token(access_token)} do
       Logger.metadata(session_id: session_id)
-
-      admin = get_in(token, ["act", "sub"])
-      scope = SgiathAuth.Scope.for_user(user, admin)
 
       conn
       |> put_session(:access_token, access_token)
       |> put_session(:refresh_token, refresh_token)
       |> put_session(:live_socket_id, session_id)
-      |> put_session(:current_scope, scope)
       |> assign(:current_scope, scope)
     else
       {:session, %{}} ->
         Logger.debug("[auth] session without access token")
-        assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
+        assign(conn, :current_scope, nil)
 
-      {:token, {:error, _reason}} ->
+      {:scope, {:error, _reason}} ->
         # Prevent infinite recursion - only attempt refresh once
         if conn.private[:auth_refresh_attempted] do
           Logger.debug("[auth] refresh already attempted, giving up")
-          assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
+          assign(conn, :current_scope, nil)
         else
           Logger.debug("[auth] refreshing session")
 
@@ -41,14 +36,14 @@ defmodule SgiathAuth do
           |> refresh_session()
           |> fetch_current_scope(opts)
         end
-
-      {:user, {:error, reason}} ->
-        Logger.warning("[auth] failed to fetch user, reason: #{inspect(reason)}")
-        assign(conn, :current_scope, SgiathAuth.Scope.for_user(nil))
     end
   end
 
-  defp refresh_session(conn) do
+  @doc """
+  Refreshes the session tokens using the refresh token stored in the session.
+  Returns the conn with updated tokens on success, or clears the session on failure.
+  """
+  def refresh_session(conn) do
     refresh_token = get_session(conn, :refresh_token)
 
     case SgiathAuth.WorkOS.authenticate_with_refresh_token(conn, refresh_token) do
@@ -70,6 +65,15 @@ defmodule SgiathAuth do
     end
   end
 
+  defp build_scope_from_token(access_token) do
+    with {:ok, %{"sub" => user_id, "role" => role, "sid" => session_id} = token} <-
+           SgiathAuth.Token.verify_and_validate(access_token),
+         {:ok, user} <- SgiathAuth.WorkOS.get_user(user_id) do
+      impersonator = get_in(token, ["act", "sub"])
+      {:ok, SgiathAuth.Scope.for_user(user, role, impersonator), session_id}
+    end
+  end
+
   def on_mount(:mount_current_scope, _params, session, socket) do
     {:cont, mount_current_scope(socket, session)}
   end
@@ -77,10 +81,17 @@ defmodule SgiathAuth do
   def on_mount(:require_authenticated, _params, session, socket) do
     socket = mount_current_scope(socket, session)
 
-    if socket.assigns.current_scope && socket.assigns.current_scope.user do
-      {:cont, socket}
-    else
-      {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.sign_in_path())}
+    cond do
+      socket.assigns.current_scope && socket.assigns.current_scope.user ->
+        {:cont, socket}
+
+      # Has token but scope building failed - try to refresh
+      session["access_token"] ->
+        {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.refresh_path())}
+
+      # No token at all - redirect to sign in
+      true ->
+        {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.sign_in_path())}
     end
   end
 
@@ -97,7 +108,23 @@ defmodule SgiathAuth do
   end
 
   defp mount_current_scope(socket, session) do
-    Phoenix.Component.assign_new(socket, :current_scope, fn -> session["current_scope"] end)
+    Phoenix.Component.assign_new(socket, :current_scope, fn ->
+      case session do
+        %{"access_token" => access_token} ->
+          case build_scope_from_token(access_token) do
+            {:ok, scope, session_id} ->
+              Logger.metadata(session_id: session_id)
+              scope
+
+            {:error, _reason} ->
+              # Token invalid - will be handled by require_authenticated if needed
+              nil
+          end
+
+        _ ->
+          nil
+      end
+    end)
   end
 
   def require_authenticated_user(conn, _opts) do

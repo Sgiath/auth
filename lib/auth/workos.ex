@@ -98,6 +98,10 @@ defmodule SgiathAuth.WorkOS do
     Application.get_env(:sgiath_auth, :sign_in_path, "/sign-in")
   end
 
+  def refresh_path do
+    Application.get_env(:sgiath_auth, :refresh_path, "/auth/refresh")
+  end
+
   def default_path do
     Application.get_env(:sgiath_auth, :default_path, "/")
   end

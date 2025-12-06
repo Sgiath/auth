@@ -38,6 +38,15 @@ defmodule SgiathAuth.Controller do
     end
   end
 
+  def refresh(conn, params) do
+    return_to = Map.get(params, "return_to", SgiathAuth.WorkOS.default_path())
+    validated_return_to = validate_relative_path(return_to, SgiathAuth.WorkOS.default_path())
+
+    conn
+    |> SgiathAuth.refresh_session()
+    |> redirect(to: validated_return_to)
+  end
+
   def sign_up(conn, _params) do
     default = SgiathAuth.WorkOS.default_path()
     return_to = get_session(conn, :user_return_to, default)
