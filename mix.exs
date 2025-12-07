@@ -23,7 +23,8 @@ defmodule SgiathAuth.MixProject do
       {:phoenix_live_view, "~> 1.1"},
       {:req, "~> 0.5"},
       {:joken, "~> 2.6"},
-      {:joken_jwks, "~> 1.7"}
+      {:joken_jwks, "~> 1.7"},
+      {:posthog, "~> 2.1", optional: true}
     ]
   end
 end

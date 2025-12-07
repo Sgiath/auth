@@ -11,7 +11,11 @@ defmodule SgiathAuth do
            {:session, get_session(conn)},
          {:scope, {:ok, scope, session_id}} <-
            {:scope, build_scope_from_token(access_token)} do
-      Logger.metadata(session_id: session_id)
+      set_context(%{
+        user_id: scope.user["id"],
+        profile_id: get_in(scope.profile.id),
+        session_id: session_id
+      })
 
       conn
       |> put_session(:access_token, access_token)
@@ -143,4 +147,15 @@ defmodule SgiathAuth do
   end
 
   defp maybe_store_return_to(conn), do: conn
+
+  if Code.ensure_loaded?(PostHog) do
+    defp set_context(properties) do
+      Logger.metadata(properties)
+      PostHog.set_context(%{distinct_id: properties.user_id})
+    end
+  else
+    defp set_context(properties) do
+      Logger.metadata(properties)
+    end
+  end
 end

@@ -76,9 +76,9 @@ defmodule SgiathAuth.Controller do
     end
   end
 
-  def callback(conn, %{"code" => code}),
-    do:
-      callback(conn, %{"code" => code, "state" => Base.encode64(SgiathAuth.WorkOS.default_path())})
+  def callback(conn, %{"code" => code}) do
+    callback(conn, %{"code" => code, "state" => Base.encode64(SgiathAuth.WorkOS.default_path())})
+  end
 
   defp authenticate(conn, %{"access_token" => access_token, "refresh_token" => refresh_token}) do
     conn
