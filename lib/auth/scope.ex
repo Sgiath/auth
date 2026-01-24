@@ -3,6 +3,7 @@ defmodule SgiathAuth.Scope do
 
   require Logger
 
+  @derive JSON.Encoder
   defstruct user: nil, profile: nil, admin: nil, role: nil
 
   def for_user(user, role \\ "member")
