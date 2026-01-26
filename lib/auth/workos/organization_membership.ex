@@ -43,12 +43,14 @@ defmodule SgiathAuth.WorkOS.OrganizationMembership do
     * `:role_slugs` - Multiple roles to assign (list of strings)
 
   """
-  def create(user_id, org_id, opts \\ []) do
+  def create("user_" <> user_id, "org_" <> org_id, opts \\ %{}) do
+    body =
+      opts
+      |> Map.put(:user_id, "user_" <> user_id)
+      |> Map.put(:organization_id, "org_" <> org_id)
+
     Client.new()
-    |> Req.post(
-      url: "/user_management/organization_memberships",
-      json: %{user_id: user_id, organization_id: org_id} |> Map.merge(Map.new(opts))
-    )
+    |> Req.post(url: "/user_management/organization_memberships", json: body)
     |> Client.handle_response()
   end
 end

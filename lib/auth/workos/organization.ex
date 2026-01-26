@@ -10,9 +10,9 @@ defmodule SgiathAuth.WorkOS.Organization do
   @doc """
   Fetches an organization by its WorkOS ID.
   """
-  def get(org_id) do
+  def get("org_" <> org_id) do
     Client.new()
-    |> Req.get(url: "/organizations/#{org_id}")
+    |> Req.get(url: "/organizations/org_#{org_id}")
     |> Client.handle_response()
   end
 
@@ -38,7 +38,7 @@ defmodule SgiathAuth.WorkOS.Organization do
   """
   def list(opts \\ []) do
     Client.new()
-    |> Req.get(url: "/organizations", params: build_list_params(opts))
+    |> Req.get(url: "/organizations", params: opts)
     |> Client.handle_response()
   end
 
@@ -51,14 +51,9 @@ defmodule SgiathAuth.WorkOS.Organization do
     * `:external_id` - external identifier string
     * `:metadata` - arbitrary metadata map
   """
-  def create(name, opts \\ []) do
-    body =
-      opts
-      |> build_body()
-      |> Map.put(:name, name)
-
+  def create("org_" <> name, opts \\ %{}) do
     Client.new()
-    |> Req.post(url: "/organizations", json: body)
+    |> Req.post(url: "/organizations", json: Map.put(opts, :name, name))
     |> Client.handle_response()
   end
 
@@ -71,35 +66,18 @@ defmodule SgiathAuth.WorkOS.Organization do
     * `:external_id` - external identifier string
     * `:metadata` - arbitrary metadata map
   """
-  def update(org_id, name, opts \\ []) do
-    body =
-      opts
-      |> build_body()
-      |> Map.put(:name, name)
-
+  def update("org_" <> org_id, name, opts \\ %{}) do
     Client.new()
-    |> Req.put(url: "/organizations/#{org_id}", json: body)
+    |> Req.put(url: "/organizations/org_#{org_id}", json: Map.put(opts, :name, name))
     |> Client.handle_response()
   end
 
   @doc """
   Deletes an organization by its WorkOS ID.
   """
-  def delete(org_id) do
+  def delete("org_" <> org_id) do
     Client.new()
-    |> Req.delete(url: "/organizations/#{org_id}")
+    |> Req.delete(url: "/organizations/org_#{org_id}")
     |> Client.handle_response()
-  end
-
-  defp build_list_params(opts) do
-    opts
-    |> Keyword.take([:domains, :limit, :before, :after, :order, :external_id])
-    |> Enum.into(%{})
-  end
-
-  defp build_body(opts) do
-    opts
-    |> Keyword.take([:domain_data, :external_id, :metadata])
-    |> Enum.into(%{})
   end
 end

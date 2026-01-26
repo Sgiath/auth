@@ -20,9 +20,9 @@ defmodule SgiathAuth.WorkOS.ApiKeys do
     * `:order` - Sort order, `:asc` or `:desc`
 
   """
-  def list(org_id, opts \\ []) do
+  def list("org_" <> org_id, opts \\ []) do
     Client.new()
-    |> Req.get(url: "/organizations/#{org_id}/api_keys", query: opts)
+    |> Req.get(url: "/organizations/org_#{org_id}/api_keys", query: opts)
     |> Client.handle_response()
   end
 
@@ -36,10 +36,10 @@ defmodule SgiathAuth.WorkOS.ApiKeys do
     * `permissions` - List of permissions to grant (default: `[]`)
 
   """
-  def create(org_id, name, permissions \\ []) do
+  def create("org_" <> org_id, name, permissions \\ []) do
     Client.new()
     |> Req.post(
-      url: "/organizations/#{org_id}/api_keys",
+      url: "/organizations/org_#{org_id}/api_keys",
       json: %{name: name, permissions: permissions}
     )
     |> Client.handle_response()
@@ -48,9 +48,9 @@ defmodule SgiathAuth.WorkOS.ApiKeys do
   @doc """
   Deletes an API key by its ID.
   """
-  def delete(api_key_id) do
+  def delete("api_key_" <> api_key_id) do
     Client.new()
-    |> Req.delete(url: "/api_keys/#{api_key_id}")
+    |> Req.delete(url: "/api_keys/api_key_#{api_key_id}")
     |> Client.handle_response()
   end
 
