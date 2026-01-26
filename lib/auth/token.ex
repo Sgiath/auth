@@ -1,4 +1,6 @@
 defmodule SgiathAuth.Token do
+  @moduledoc """
+  """
   use Joken.Config
 
   add_hook(JokenJwks, strategy: SgiathAuth.Token.Strategy)

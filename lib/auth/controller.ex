@@ -1,4 +1,6 @@
 defmodule SgiathAuth.Controller do
+  @moduledoc """
+  """
   use Phoenix.Controller, formats: [:html, :json]
 
   import Plug.Conn

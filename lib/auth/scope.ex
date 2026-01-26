@@ -1,5 +1,6 @@
 defmodule SgiathAuth.Scope do
-  @moduledoc false
+  @moduledoc """
+  """
 
   require Logger
 

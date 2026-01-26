@@ -11,12 +11,11 @@ defmodule SgiathAuth.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
-
-      name: "Nostr Lib",
-      source_url: "https://github.com/Sgiath/nostr-lib",
-      homepage_url: "https://sgiath.dev/libraries#nostr_lib",
+      name: "Sgiath Auth",
+      source_url: "https://github.com/sgiath/auth",
+      homepage_url: "https://sgiath.dev/libraries#auth",
       description: """
-      Library which implements Nostr specs
+      Opinionated authentication library for Phoenix applications
       """,
       package: package(),
       docs: docs()
@@ -29,6 +28,12 @@ defmodule SgiathAuth.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [precommit: :test]
+    ]
+  end
+
   defp deps do
     [
       {:phoenix, "~> 1.8"},
@@ -36,7 +41,8 @@ defmodule SgiathAuth.MixProject do
       {:req, "~> 0.5"},
       {:joken, "~> 2.6"},
       {:joken_jwks, "~> 1.7"},
-      {:posthog, "~> 2.1", optional: true}
+      {:posthog, "~> 2.1", optional: true},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false, warn_if_outdated: true}
     ]
   end
 
@@ -54,19 +60,20 @@ defmodule SgiathAuth.MixProject do
       files: ~w(lib .formatter.exs mix.exs usage-rules.md README* LICENSE*),
       licenses: ["WTFPL"],
       links: %{
-        "GitHub" => "https://github.com/Sgiath/sgiath-auth"
+        "GitHub" => "https://github.com/sgiath/auth"
       }
     ]
   end
 
   defp docs do
     [
-      authors: ["Sgiath <sgiath@sgiath.dev>"],
-      main: "overview",
+      authors: ["sgiath <sgiath@sgiath.dev>"],
+      main: "readme",
+      extras: ["README.md", "usage-rules.md"],
       api_reference: false,
       formatters: ["html"],
       source_ref: "v#{@version}",
-      source_url: "https://github.com/sgiath/sgiath-auth",
+      source_url: "https://github.com/sgiath/auth"
     ]
   end
 end

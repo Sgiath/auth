@@ -1,4 +1,6 @@
 defmodule SgiathAuth.WorkOS.Client do
+  @moduledoc """
+  """
   require Logger
 
   @api_base_url "https://api.workos.com"
