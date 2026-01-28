@@ -51,7 +51,7 @@ defmodule SgiathAuth.WorkOS.Organization do
     * `:external_id` - external identifier string
     * `:metadata` - arbitrary metadata map
   """
-  def create("org_" <> name, opts \\ %{}) do
+  def create(name, opts \\ %{}) do
     Client.new()
     |> Req.post(url: "/organizations", json: Map.put(opts, :name, name))
     |> Client.handle_response()
