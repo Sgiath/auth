@@ -55,7 +55,7 @@ mix deps.get          # Install dependencies
 
 Required: `workos_client_id`, `workos_secret_key`, `callback_url`
 
-Optional: `sign_in_path` (default: "/sign-in"), `default_path` (default: "/"), `profile_module`
+Optional: `sign_in_path` (default: "/sign-in"), `default_path` (default: "/"), `profile_module`, `no_organization_redirect` (required if using `require_organization` plug/hook)
 
 ## Development Environment
 

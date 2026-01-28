@@ -106,35 +106,26 @@ defmodule SgiathAuth do
     end
   end
 
-  defp ensure_organization(conn, org_id, user) when is_binary(org_id) do
+  defp ensure_organization(conn, org_id, _user) when is_binary(org_id) do
     case SgiathAuth.WorkOS.Organization.get(org_id) do
       {:ok, org} -> {conn, org}
-      {:error, _} -> maybe_create_organization(conn, user)
+      {:error, _} -> {conn, nil}
     end
   end
 
-  defp ensure_organization(conn, _org_id, user) do
-    maybe_create_organization(conn, user)
-  end
+  defp ensure_organization(conn, _org_id, _user), do: {conn, nil}
 
-  defp maybe_create_organization(conn, user) do
-    if Application.get_env(:sgiath_auth, :auto_create_organization, false) do
-      create_organization_for_user(conn, user)
+  @no_org_redirect Application.compile_env!(:sgiath_auth, :no_organization_redirect)
+
+  def require_organization(conn, _opts) do
+    if conn.assigns.current_scope && conn.assigns.current_scope.org do
+      conn
     else
-      {conn, nil}
-    end
-  end
+      return_to = current_path(conn)
 
-  defp create_organization_for_user(conn, user) do
-    name = "#{user["first_name"]} #{user["last_name"]}"
-
-    case SgiathAuth.WorkOS.Organization.create(name) do
-      {:ok, org} ->
-        SgiathAuth.WorkOS.OrganizationMembership.create(org["id"], user["id"])
-        {put_session(conn, :org_id, org["id"]), org}
-
-      {:error, _} ->
-        {conn, nil}
+      conn
+      |> redirect(to: "#{@no_org_redirect}?return_to=#{return_to}")
+      |> halt()
     end
   end
 
@@ -150,17 +141,24 @@ defmodule SgiathAuth do
         {:cont, socket}
 
       session["access_token"] ->
-        if function_exported?(socket.view, :return_to, 1) do
-          return_to = socket.view.return_to(params)
-          {:halt, Phoenix.LiveView.redirect(socket, to: "/auth/refresh?return_to=#{return_to}")}
-        else
-          {:halt, Phoenix.LiveView.redirect(socket, to: "/auth/refresh?return_to=/")}
-        end
+        return_to = get_return_to(socket, params)
+        {:halt, Phoenix.LiveView.redirect(socket, to: "/auth/refresh?return_to=#{return_to}")}
 
       # No token at all - redirect to sign in
       :otherwise ->
         Logger.warning("no access token")
         {:halt, Phoenix.LiveView.redirect(socket, to: SgiathAuth.WorkOS.sign_in_path())}
+    end
+  end
+
+  def on_mount(:require_organization, params, _session, socket) do
+    scope = socket.assigns[:current_scope]
+
+    if scope && scope.org do
+      {:cont, socket}
+    else
+      return_to = get_return_to(socket, params)
+      {:halt, Phoenix.LiveView.redirect(socket, to: "#{@no_org_redirect}?return_to=#{return_to}")}
     end
   end
 
@@ -222,6 +220,14 @@ defmodule SgiathAuth do
   end
 
   defp maybe_store_return_to(conn), do: conn
+
+  defp get_return_to(socket, params) do
+    if function_exported?(socket.view, :return_to, 1) do
+      socket.view.return_to(params)
+    else
+      "/"
+    end
+  end
 
   if Code.ensure_loaded?(PostHog) do
     defp set_context(properties) do
