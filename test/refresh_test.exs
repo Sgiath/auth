@@ -47,7 +47,11 @@ defmodule SgiathAuth.RefreshTest do
 
   test "refresh_session forwards organization_id and updates session" do
     Req.Test.stub(@workos_stub, fn conn ->
-      body = conn |> Req.Test.raw_body() |> IO.iodata_to_binary()
+      body =
+        conn
+        |> Req.Test.raw_body()
+        |> IO.iodata_to_binary()
+
       send(self(), {:refresh_body, body})
 
       Req.Test.json(conn, %{

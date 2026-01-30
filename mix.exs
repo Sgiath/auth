@@ -8,8 +8,8 @@ defmodule SgiathAuth.MixProject do
       app: :sgiath_auth,
       version: @version,
       elixir: "~> 1.19",
+      elixirc_options: [warnings_as_errors: true],
       start_permanent: Mix.env() == :prod,
-      aliases: aliases(),
       deps: deps(),
       name: "Sgiath Auth",
       source_url: "https://github.com/sgiath/auth",
@@ -30,7 +30,7 @@ defmodule SgiathAuth.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test]
+      preferred_envs: ["test.watch": :test]
     ]
   end
 
@@ -42,13 +42,12 @@ defmodule SgiathAuth.MixProject do
       {:joken, "~> 2.6"},
       {:joken_jwks, "~> 1.7"},
       {:posthog, "~> 2.1", optional: true},
-      {:ex_doc, "~> 0.40", only: :dev, runtime: false, warn_if_outdated: true}
-    ]
-  end
 
-  defp aliases do
-    [
-      precommit: ["compile --warning-as-errors", "deps.unlock --unused", "format", "test"]
+      # testing and development
+      {:ex_check, "~> 0.16", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:mix_test_watch, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false, warn_if_outdated: true}
     ]
   end
 

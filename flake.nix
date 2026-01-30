@@ -17,7 +17,10 @@
         in
         {
           devShells.default = pkgs.mkShell {
-            packages = [ elixir ];
+            packages = [
+              elixir
+              pkgs.nodejs
+            ];
             env = {
               MIX_OS_DEPS_COMPILE_PARTITION_COUNT = "16";
               ERL_AFLAGS = "+pc unicode -kernel shell_history enabled";

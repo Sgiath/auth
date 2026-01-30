@@ -91,29 +91,30 @@ Example LiveView hook flow:
 ```javascript
 Hooks.AuthRefresh = {
   mounted() {
-    this.handleEvent("auth:refresh", ({return_to, organization_id}) => {
-      const form = document.createElement("form")
-      form.method = "post"
-      form.action = "/auth/refresh"
-      form.appendChild(this.input("_csrf_token", this.csrfToken()))
-      form.appendChild(this.input("return_to", return_to))
-      if (organization_id) form.appendChild(this.input("organization_id", organization_id))
-      document.body.appendChild(form)
-      form.submit()
-    })
+    this.handleEvent("auth:refresh", ({ return_to, organization_id }) => {
+      const form = document.createElement("form");
+      form.method = "post";
+      form.action = "/auth/refresh";
+      form.appendChild(this.input("_csrf_token", this.csrfToken()));
+      form.appendChild(this.input("return_to", return_to));
+      if (organization_id)
+        form.appendChild(this.input("organization_id", organization_id));
+      document.body.appendChild(form);
+      form.submit();
+    });
   },
   input(name, value) {
-    const input = document.createElement("input")
-    input.type = "hidden"
-    input.name = name
-    input.value = value
-    return input
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    return input;
   },
   csrfToken() {
-    const meta = document.querySelector("meta[name='csrf-token']")
-    return meta ? meta.getAttribute("content") : ""
-  }
-}
+    const meta = document.querySelector("meta[name='csrf-token']");
+    return meta ? meta.getAttribute("content") : "";
+  },
+};
 ```
 
 ## Flow details (what actually happens)

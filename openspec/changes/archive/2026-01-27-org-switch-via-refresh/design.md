@@ -5,12 +5,14 @@ Current auth flow stores `org_id` only at callback time. Refresh uses the stored
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Allow apps to trigger org switching via a POST refresh endpoint by providing `organization_id`.
 - Keep session tokens and `org_id` aligned with the WorkOS response.
 - Move refresh operations to POST-only and document the new usage with an example.
 - Provide a LiveView-friendly POST refresh pattern using a client hook and `return_to`.
 
 **Non-Goals:**
+
 - Backward compatibility with GET refresh requests.
 - New dedicated switch endpoint or UI flow.
 - Organization membership discovery or validation in the library.

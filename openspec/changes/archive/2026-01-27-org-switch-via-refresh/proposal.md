@@ -11,6 +11,7 @@ Apps need a supported way to switch organizations without a full sign-in redirec
 ## Capabilities
 
 ### New Capabilities
+
 - `organization-switching`: Allow authenticated sessions to switch org context via refresh token and update session scope.
 
 ### Modified Capabilities

@@ -1,6 +1,5 @@
 defmodule SgiathAuth.Supervisor do
-  @moduledoc """
-  """
+  @moduledoc false
   use Supervisor
 
   def start_link(opts) do
